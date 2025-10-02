@@ -3074,6 +3074,353 @@ az storage account management-policy delete \
 
 ---
 
+## Azure CLI Commands Reference
+
+### Storage Account Management
+
+```bash
+# Login to Azure
+az login
+az account set --subscription "Production"
+
+# Create resource group
+az group create --name "RG-Storage" --location "eastus"
+
+# Create storage account (Standard GPv2)
+az storage account create \
+    --resource-group "RG-Storage" \
+    --name "mystorageaccount" \
+    --location "eastus" \
+    --sku "Standard_LRS" \
+    --kind "StorageV2" \
+    --access-tier "Hot"
+
+# Create storage account with GRS
+az storage account create \
+    --resource-group "RG-Storage" \
+    --name "mystorageaccountgrs" \
+    --location "eastus" \
+    --sku "Standard_GRS" \
+    --kind "StorageV2"
+
+# Create Premium Block Blob storage
+az storage account create \
+    --resource-group "RG-Storage" \
+    --name "mypremiumblob" \
+    --location "eastus" \
+    --sku "Premium_LRS" \
+    --kind "BlockBlobStorage"
+
+# Get storage account
+az storage account show \
+    --resource-group "RG-Storage" \
+    --name "mystorageaccount"
+
+# List all storage accounts
+az storage account list --resource-group "RG-Storage" --output table
+
+# Update storage account (change access tier)
+az storage account update \
+    --resource-group "RG-Storage" \
+    --name "mystorageaccount" \
+    --access-tier "Cool"
+
+# Update replication type
+az storage account update \
+    --resource-group "RG-Storage" \
+    --name "mystorageaccount" \
+    --sku "Standard_GRS"
+
+# Enable HTTPS-only traffic
+az storage account update \
+    --resource-group "RG-Storage" \
+    --name "mystorageaccount" \
+    --https-only true
+
+# Get storage account keys
+az storage account keys list \
+    --resource-group "RG-Storage" \
+    --account-name "mystorageaccount"
+
+# Regenerate storage account key
+az storage account keys renew \
+    --resource-group "RG-Storage" \
+    --account-name "mystorageaccount" \
+    --key "key1"
+
+# Delete storage account
+az storage account delete \
+    --resource-group "RG-Storage" \
+    --name "mystorageaccount" \
+    --yes
+```
+
+### Blob Storage Management
+
+```bash
+# Get storage account key (for authentication)
+KEY=$(az storage account keys list \
+    --resource-group "RG-Storage" \
+    --account-name "mystorageaccount" \
+    --query "[0].value" -o tsv)
+
+# Create container
+az storage container create \
+    --name "mycontainer" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Create container with public access
+az storage container create \
+    --name "publiccontainer" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --public-access "blob"
+
+# List containers
+az storage container list \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --output table
+
+# Set container access level
+az storage container set-permission \
+    --name "mycontainer" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --public-access "container"
+
+# Upload blob
+az storage blob upload \
+    --container-name "mycontainer" \
+    --file "C:\local\file.txt" \
+    --name "file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Upload blob to specific tier
+az storage blob upload \
+    --container-name "backups" \
+    --file "backup.zip" \
+    --name "backup.zip" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --tier "Cool"
+
+# Upload directory
+az storage blob upload-batch \
+    --destination "mycontainer" \
+    --source "C:\local\folder" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Download blob
+az storage blob download \
+    --container-name "mycontainer" \
+    --name "file.txt" \
+    --file "C:\local\file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Download directory
+az storage blob download-batch \
+    --source "mycontainer" \
+    --destination "C:\local\folder" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# List blobs
+az storage blob list \
+    --container-name "mycontainer" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --output table
+
+# List blobs with prefix
+az storage blob list \
+    --container-name "mycontainer" \
+    --prefix "logs/" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Copy blob
+az storage blob copy start \
+    --source-container "source-container" \
+    --source-blob "file.txt" \
+    --destination-container "dest-container" \
+    --destination-blob "file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Check copy status
+az storage blob show \
+    --container-name "dest-container" \
+    --name "file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --query "properties.copy"
+
+# Change blob tier
+az storage blob set-tier \
+    --container-name "mycontainer" \
+    --name "file.txt" \
+    --tier "Archive" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Create blob snapshot
+az storage blob snapshot \
+    --container-name "mycontainer" \
+    --name "file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Delete blob
+az storage blob delete \
+    --container-name "mycontainer" \
+    --name "file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Delete container
+az storage container delete \
+    --name "mycontainer" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+```
+
+### SAS Token Generation
+
+```bash
+# Generate account SAS
+az storage account generate-sas \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --services "bf" \
+    --resource-types "sco" \
+    --permissions "rwdlacup" \
+    --expiry "2024-12-31T23:59:00Z" \
+    --https-only
+
+# Generate container SAS
+az storage container generate-sas \
+    --name "mycontainer" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --permissions "rwl" \
+    --expiry "2024-12-31T23:59:00Z" \
+    --https-only
+
+# Generate blob SAS (read-only)
+az storage blob generate-sas \
+    --container-name "mycontainer" \
+    --name "file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --permissions "r" \
+    --expiry "2024-06-15T12:00:00Z" \
+    --https-only
+
+# Generate SAS with IP restriction
+az storage blob generate-sas \
+    --container-name "mycontainer" \
+    --name "file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --permissions "r" \
+    --expiry "2024-06-15T12:00:00Z" \
+    --ip "203.0.113.0/24" \
+    --https-only
+```
+
+### Azure Files Management
+
+```bash
+# Create file share
+az storage share create \
+    --name "myshare" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --quota 100
+
+# Get file share
+az storage share show \
+    --name "myshare" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# List file shares
+az storage share list \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --output table
+
+# Update file share quota
+az storage share update \
+    --name "myshare" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --quota 200
+
+# Create directory in share
+az storage directory create \
+    --share-name "myshare" \
+    --name "documents" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Upload file to share
+az storage file upload \
+    --share-name "myshare" \
+    --source "C:\local\file.txt" \
+    --path "documents/file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Download file from share
+az storage file download \
+    --share-name "myshare" \
+    --path "documents/file.txt" \
+    --dest "C:\local\file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# List files in share
+az storage file list \
+    --share-name "myshare" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --output table
+
+# Create file share snapshot
+az storage share snapshot \
+    --name "myshare" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# List file share snapshots
+az storage share list \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY" \
+    --include-snapshot \
+    --query "[?snapshot!=null]" \
+    --output table
+
+# Delete file
+az storage file delete \
+    --share-name "myshare" \
+    --path "documents/file.txt" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+
+# Delete file share
+az storage share delete \
+    --name "myshare" \
+    --account-name "mystorageaccount" \
+    --account-key "$KEY"
+```
+---
+
 ## Common Exam Scenarios
 
 ### Scenario 1: Cannot Access Storage Account
@@ -3881,419 +4228,6 @@ In Module 3, you'll learn:
 2. Take the Module 2 practice quiz
 3. Review any weak areas
 4. Practice PowerShell/CLI commands
-
----
-
-**Good luck with your studies!**
-
-Remember: Storage is one of the most tested topics on AZ-104. Make sure you understand authentication methods, replication options, and access tiers thoroughly.
-
-**[← Back to Module 1](../Module-01-Identity-Governance/README.md) | [Next: Module 3: Compute →](../Module-03-Compute/README.md)**
-Update-AzStorageAccountNetworkRuleSet -ResourceGroupName "RG-Storage" `    -StorageAccountName "mystorageaccount"`
--Bypass AzureServices
-
-# Remove network rule
-
-Remove-AzStorageAccountNetworkRule -ResourceGroupName "RG-Storage" `    -StorageAccountName "mystorageaccount"`
--IPAddressOrRange "203.0.113.5"
-
-# Create private endpoint
-
-$subnet = Get-AzVirtualNetworkSubnetConfig -VirtualNetworkName "VNet-Prod" `    -ResourceGroupName "RG-Network"`
--Name "AppSubnet"
-
-$storageAccount = Get-AzStorageAccount -ResourceGroupName "RG-Storage" `
--Name "mystorageaccount"
-
-$privateEndpoint = New-AzPrivateEndpoint -Name "storage-private-endpoint" `    -ResourceGroupName "RG-Storage"`
--Location "eastus" `    -Subnet $subnet`
--PrivateLinkServiceConnection (New-AzPrivateLinkServiceConnection `        -Name "storage-connection"`
--PrivateLinkServiceId $storageAccount.Id `
--GroupId "blob")
-
-````
-
-### Monitoring and Diagnostics
-
-```powershell
-# Enable diagnostic settings (send to Log Analytics)
-$workspace = Get-AzOperationalInsightsWorkspace -ResourceGroupName "RG-Monitoring" `
-    -Name "LogAnalyticsWorkspace"
-
-$storageAccount = Get-AzStorageAccount -ResourceGroupName "RG-Storage" `
-    -Name "mystorageaccount"
-
-$metric = New-AzDiagnosticSettingMetricSettingsObject -Enabled $true `
-    -Category "Transaction"
-
-$log = New-AzDiagnosticSettingLogSettingsObject -Enabled $true `
-    -Category "StorageRead"
-
-New-AzDiagnosticSetting -Name "storage-diagnostics" `
-    -ResourceId "$($storageAccount.Id)/blobServices/default" `
-    -WorkspaceId $workspace.ResourceId `
-    -Metric $metric `
-    -Log $log
-
-# Get storage account metrics
-Get-AzMetric -ResourceId $storageAccount.Id `
-    -MetricName "UsedCapacity" `
-    -TimeGrain 01:00:00 `
-    -StartTime (Get-Date).AddDays(-7) `
-    -EndTime (Get-Date)
-
-# Get blob service properties
-Get-AzStorageBlobServiceProperty -ResourceGroupName "RG-Storage" `
-    -StorageAccountName "mystorageaccount"
-````
-
----
-
-## Azure CLI Commands Reference
-
-### Storage Account Management
-
-```bash
-# Login to Azure
-az login
-az account set --subscription "Production"
-
-# Create resource group
-az group create --name "RG-Storage" --location "eastus"
-
-# Create storage account (Standard GPv2)
-az storage account create \
-    --resource-group "RG-Storage" \
-    --name "mystorageaccount" \
-    --location "eastus" \
-    --sku "Standard_LRS" \
-    --kind "StorageV2" \
-    --access-tier "Hot"
-
-# Create storage account with GRS
-az storage account create \
-    --resource-group "RG-Storage" \
-    --name "mystorageaccountgrs" \
-    --location "eastus" \
-    --sku "Standard_GRS" \
-    --kind "StorageV2"
-
-# Create Premium Block Blob storage
-az storage account create \
-    --resource-group "RG-Storage" \
-    --name "mypremiumblob" \
-    --location "eastus" \
-    --sku "Premium_LRS" \
-    --kind "BlockBlobStorage"
-
-# Get storage account
-az storage account show \
-    --resource-group "RG-Storage" \
-    --name "mystorageaccount"
-
-# List all storage accounts
-az storage account list --resource-group "RG-Storage" --output table
-
-# Update storage account (change access tier)
-az storage account update \
-    --resource-group "RG-Storage" \
-    --name "mystorageaccount" \
-    --access-tier "Cool"
-
-# Update replication type
-az storage account update \
-    --resource-group "RG-Storage" \
-    --name "mystorageaccount" \
-    --sku "Standard_GRS"
-
-# Enable HTTPS-only traffic
-az storage account update \
-    --resource-group "RG-Storage" \
-    --name "mystorageaccount" \
-    --https-only true
-
-# Get storage account keys
-az storage account keys list \
-    --resource-group "RG-Storage" \
-    --account-name "mystorageaccount"
-
-# Regenerate storage account key
-az storage account keys renew \
-    --resource-group "RG-Storage" \
-    --account-name "mystorageaccount" \
-    --key "key1"
-
-# Delete storage account
-az storage account delete \
-    --resource-group "RG-Storage" \
-    --name "mystorageaccount" \
-    --yes
-```
-
-### Blob Storage Management
-
-```bash
-# Get storage account key (for authentication)
-KEY=$(az storage account keys list \
-    --resource-group "RG-Storage" \
-    --account-name "mystorageaccount" \
-    --query "[0].value" -o tsv)
-
-# Create container
-az storage container create \
-    --name "mycontainer" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Create container with public access
-az storage container create \
-    --name "publiccontainer" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --public-access "blob"
-
-# List containers
-az storage container list \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --output table
-
-# Set container access level
-az storage container set-permission \
-    --name "mycontainer" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --public-access "container"
-
-# Upload blob
-az storage blob upload \
-    --container-name "mycontainer" \
-    --file "C:\local\file.txt" \
-    --name "file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Upload blob to specific tier
-az storage blob upload \
-    --container-name "backups" \
-    --file "backup.zip" \
-    --name "backup.zip" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --tier "Cool"
-
-# Upload directory
-az storage blob upload-batch \
-    --destination "mycontainer" \
-    --source "C:\local\folder" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Download blob
-az storage blob download \
-    --container-name "mycontainer" \
-    --name "file.txt" \
-    --file "C:\local\file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Download directory
-az storage blob download-batch \
-    --source "mycontainer" \
-    --destination "C:\local\folder" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# List blobs
-az storage blob list \
-    --container-name "mycontainer" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --output table
-
-# List blobs with prefix
-az storage blob list \
-    --container-name "mycontainer" \
-    --prefix "logs/" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Copy blob
-az storage blob copy start \
-    --source-container "source-container" \
-    --source-blob "file.txt" \
-    --destination-container "dest-container" \
-    --destination-blob "file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Check copy status
-az storage blob show \
-    --container-name "dest-container" \
-    --name "file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --query "properties.copy"
-
-# Change blob tier
-az storage blob set-tier \
-    --container-name "mycontainer" \
-    --name "file.txt" \
-    --tier "Archive" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Create blob snapshot
-az storage blob snapshot \
-    --container-name "mycontainer" \
-    --name "file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Delete blob
-az storage blob delete \
-    --container-name "mycontainer" \
-    --name "file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Delete container
-az storage container delete \
-    --name "mycontainer" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-```
-
-### SAS Token Generation
-
-```bash
-# Generate account SAS
-az storage account generate-sas \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --services "bf" \
-    --resource-types "sco" \
-    --permissions "rwdlacup" \
-    --expiry "2024-12-31T23:59:00Z" \
-    --https-only
-
-# Generate container SAS
-az storage container generate-sas \
-    --name "mycontainer" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --permissions "rwl" \
-    --expiry "2024-12-31T23:59:00Z" \
-    --https-only
-
-# Generate blob SAS (read-only)
-az storage blob generate-sas \
-    --container-name "mycontainer" \
-    --name "file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --permissions "r" \
-    --expiry "2024-06-15T12:00:00Z" \
-    --https-only
-
-# Generate SAS with IP restriction
-az storage blob generate-sas \
-    --container-name "mycontainer" \
-    --name "file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --permissions "r" \
-    --expiry "2024-06-15T12:00:00Z" \
-    --ip "203.0.113.0/24" \
-    --https-only
-```
-
-### Azure Files Management
-
-```bash
-# Create file share
-az storage share create \
-    --name "myshare" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --quota 100
-
-# Get file share
-az storage share show \
-    --name "myshare" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# List file shares
-az storage share list \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --output table
-
-# Update file share quota
-az storage share update \
-    --name "myshare" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --quota 200
-
-# Create directory in share
-az storage directory create \
-    --share-name "myshare" \
-    --name "documents" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Upload file to share
-az storage file upload \
-    --share-name "myshare" \
-    --source "C:\local\file.txt" \
-    --path "documents/file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Download file from share
-az storage file download \
-    --share-name "myshare" \
-    --path "documents/file.txt" \
-    --dest "C:\local\file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# List files in share
-az storage file list \
-    --share-name "myshare" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --output table
-
-# Create file share snapshot
-az storage share snapshot \
-    --name "myshare" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# List file share snapshots
-az storage share list \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY" \
-    --include-snapshot \
-    --query "[?snapshot!=null]" \
-    --output table
-
-# Delete file
-az storage file delete \
-    --share-name "myshare" \
-    --path "documents/file.txt" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-
-# Delete file share
-az storage share delete \
-    --name "myshare" \
-    --account-name "mystorageaccount" \
-    --account-key "$KEY"
-```
 
 ---
 
