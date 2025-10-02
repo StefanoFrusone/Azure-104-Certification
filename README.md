@@ -1,7 +1,9 @@
 # AZ-104: Microsoft Azure Administrator - Study Guide
 
-[![Azure](https://img.shields.io/badge/Azure-0078D4?style=for-the-badge)](https://azure.microsoft.com/)
-[![Microsoft](https://img.shields.io/badge/Microsoft-666666?style=for-the-badge&logo=microsoft&logoColor=white)](https://www.microsoft.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![Azure](https://img.shields.io/badge/Azure-AZ--104-blue.svg)](https://learn.microsoft.com/en-us/certifications/exams/az-104)
+
 
 ## Welcome! 👋
 
